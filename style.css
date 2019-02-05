@@ -1,3 +1,15 @@
 body{
-  background-color:"#405050"
+  background-color:#405050;
+}
+
+h1{
+  color:#800030;
+}
+
+p{
+  color:003080;
+}
+
+a{
+  color:308030;
 }
