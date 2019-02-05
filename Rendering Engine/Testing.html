@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>
+Testing Game Engine
+</title>
+</head>
+<body>
+<script src = "Vector.js"></script>
+<script src = "Matrix.js"></script>
+<script src = "Shader.js"></script>
+<script src = "Rendering Engine.js"></script>
+<script>
+let game = new projection();
+game.loadShaders(VS, PS);
+
+let vrtx = [];
+let groups = [];
+function reset(){
+	//Construct the sphere of radius 72px with color #003f7f 720px away from view center
+	let color = [0, 63, 127];
+	let hardness = 30;
+	let strength = 3;
+	let mod = 20;
+	for(let l = -Math.PI / 2; l <= Math.PI / 2; l += Math.PI / mod){
+		let y = Math.sin(l);
+		let r = Math.sqrt(1 - y * y);
+		for(let a = 0; a < Math.PI * 2; a += Math.PI / mod){
+			vrtx.push(scale([r * Math.cos(a), y, r * Math.sin(a) + 10], 72));
+		}
+	}
+	for(let i = 0; i < vrtx.length - mod * 2; i++){
+		if(i % (mod * 2) != (mod * 2 - 1)){
+			groups.push([i, i + 1, i + mod * 2 + 1, color, hardness, strength], [i, i + mod * 2 + 1, i + mod * 2, color, hardness, strength]);
+		}
+		else{
+			groups.push([i, i - (mod * 2 - 1), i + 1, color, hardness, strength], [i, i + 1, i + mod * 2, color, hardness, strength]);
+		}
+	}
+}
+reset();
+
+let speed = 0.01;
+
+//Create random rotation based off of base speed
+let x = Math.random() * speed * 2 - speed;
+let y = Math.random() * speed * 2 - speed;
+let z = Math.random() * speed * 2 - speed;
+
+//Set the light to be in the location of your mouse
+function move(e){
+	light = [e.x - window.innerWidth / 2, -(e.y - window.innerHeight / 2), 0];
+}
+document.onmousemove = move;
+
+function update(){
+	//Calculate rotation matrixes
+	let rotZ = [
+		[Math.cos(z),	-Math.sin(z),	0],
+		[Math.sin(z),	Math.cos(z),	0],
+		[0,				0,				1]
+	];
+	let rotY = [
+		[Math.cos(y),	0, -Math.sin(y)],
+		[0,				1, 0],
+		[Math.sin(y),	0, Math.cos(y)]
+	];
+	let rotX = [
+		[1, 0, 				0],
+		[0, Math.cos(x),	-Math.sin(x)],
+		[0, Math.sin(x),	Math.cos(x)]
+	];
+	let rot = multMatrix(multMatrix(rotZ, rotY), rotX);
+
+	//Rotate the sphere around its center of 720px away
+	for(let i = 0; i < vrtx.length; i++){
+		let v1 = vrtx[i];
+		v1[2] =  v1[2] - 720;
+		v1 = fromMatrix(multMatrix(rot, fromVector(v1)));
+		v1[2] = v1[2] + 720;
+		vrtx[i] = v1;
+	}
+
+	//Draw the sphere
+	game.clear("#555555");
+	game.draw(vrtx, groups);
+}
+
+setInterval(update, 18);
+
+
+
+/*			Notes on Completion
+This rendering engine is where I fused my knowledge of Calculus 3 and vector and matrix maths to accomplish a more realistic image with less computation than before.
+It does not render faces that are facing away from itself (by checking the gradients).
+It calculates the percentage the face is lit up (again, with the gradients between the normal vector to the face and the vector to the viewer).
+It also calculates the percentage of light reflected (with the gradients of the normal vector, to the viewer, and to the light).
+Due to the fact that I am using the CPU and I don't have supper fast processes, I have not gotten a depth buffer in this so it will just have to do with checking if a face is facing the viewer (more improvment on a later design).
+*/
+</script>
+</body>
+</html>
